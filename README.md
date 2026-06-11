@@ -1,309 +1,162 @@
-# Nivuus - Cloud Gaming Server Configuration
+<div align="center">
 
-**Nivuus** est la configuration système complète pour un serveur de cloud gaming hautes performances avec gestion thermique optimisée.
+# 🎮 Nivuus
 
-## Vue d'ensemble
+### Turn a spare PC into a cloud-gaming powerhouse — set up entirely from your phone.
 
-Système d'installation automatisée permettant de déployer en une ligne de commande:
-- Optimisations thermiques CPU/GPU
-- Configuration QEMU/KVM avec GPU passthrough
-- CPU pinning et isolation pour performances gaming
-- Gestion de la consommation électrique
+**Burn one USB stick. Boot it. Connect to its Wi‑Fi. Configure everything in a web page. Reboot into a fully-tuned server.**
 
-## Caractéristiques
+No SSH. No config files. No 40-tab how-to. Just a wizard.
 
-### Matériel
-- **CPU**: Intel i9-12900K (8 P-cores + 8 E-cores)
-- **GPU**: NVIDIA RTX 4070 (passthrough vers VM Windows)
-- **RAM**: 64GB DDR4
-- **Hyperviseur**: QEMU/KVM + libvirt
+[![Build ISO](https://github.com/maximeallanic/nivuus-installer/actions/workflows/build-iso.yml/badge.svg)](https://github.com/maximeallanic/nivuus-installer/actions/workflows/build-iso.yml)
+[![Latest ISO](https://img.shields.io/github/v/release/maximeallanic/nivuus-installer?label=download%20ISO)](https://github.com/maximeallanic/nivuus-installer/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Debian 12](https://img.shields.io/badge/base-Debian%2012-A81D33)
+![UEFI](https://img.shields.io/badge/boot-UEFI-informational)
 
-### Optimisations
-- ✅ **Thermique**: CPU limité à 80°C max sous charge complète
-- ✅ **Performance**: 14 vCPUs dédiés à la VM gaming
-- ✅ **Consommation**: -45W à -50W au repos (GPU P-State + E-cores)
-- ✅ **Latence**: CPU pinning pour latence minimale
+</div>
 
-## Installation Rapide
+---
 
-### One-Line Install
+## Why Nivuus?
+
+You've got hardware. Maybe an old gaming rig, a homelab box, a Frankenstein build with a spare GPU. Turning it into a real server means hours of `apt`, GRUB edits, IOMMU groups, hostapd configs, firewall zones, VFIO incantations… copy-pasted from a dozen blog posts that half-work.
+
+**Nivuus collapses all of that into a boot-and-click experience.** It's a bootable installer that opens its own **Wi‑Fi hotspot** at boot. You join it from your laptop or phone, a **setup page pops up automatically** (captive-portal style), you pick your disk, your network, your features — hit *Install*, and watch a live progress bar. Reboot, and your machine is a tuned cloud-gaming + homelab server.
+
+> Think "router setup wizard," but it installs an entire optimized Linux server.
+
+---
+
+## ⚡ Install in 3 steps
+
+```
+   ┌─────────────┐      ┌──────────────────────┐      ┌────────────────────┐
+   │ 1. Flash USB │  →   │ 2. Boot + join Wi‑Fi  │  →  │ 3. Configure in web │
+   │  the ISO     │      │  "Nivuus-Setup-XXXX"  │     │  page → Install     │
+   └─────────────┘      └──────────────────────┘      └────────────────────┘
+```
+
+1. **Flash it.** Download the [latest ISO](https://github.com/maximeallanic/nivuus-installer/releases/latest) and write it to a USB stick (`dd`, Rufus, balenaEtcher… your call).
+2. **Boot it.** Plug it into the target machine and boot (UEFI). A Wi‑Fi network **`Nivuus-Setup-XXXX`** appears — the password is shown right on the screen. No screen handy? It also serves the portal over Ethernet.
+3. **Configure it.** Join the network from any device; the setup page opens on its own. Choose disk, hostname, account, internet (DHCP or PPPoE), Wi‑Fi, and which features to install. Press **Install**, watch the live log, reboot. Done. 🎉
+
+No keyboard on the server. No monitor required. No prior Linux knowledge needed.
+
+---
+
+## 🧰 What you can build with it
+
+Tick the boxes you want in the wizard — Nivuus installs and wires them up:
+
+| Feature | What it gives you |
+|---|---|
+| 🖥️ **GPU passthrough gaming VM** | QEMU/KVM + VFIO, IOMMU, hugepages, 1:1 CPU pinning. Stream games (Moonlight/Parsec/RDP) from a Windows VM with a real GPU. |
+| 🌡️ **Thermal tuning** | Smart P‑core/E‑core frequency + fan curves. Quiet, cool, and up to **‑60% idle power** — no throttling. |
+| 🌐 **Full networking** | NetworkManager bridges (trusted / guest / VM), DHCP or **PPPoE** (fibre) with one form. |
+| 📶 **Dual-band Wi‑Fi access point** | Your server becomes the Wi‑Fi too — `hostapd` 2.4 + 5 GHz, private + guest SSIDs. |
+| 🛡️ **Firewall** | `firewalld` + `nftables` + `fail2ban`, sensible zones out of the box. |
+| 🐳 **Docker stack** | One toggle for the container engine; bring your media/homelab stack (Plex, *arr suite, etc.). |
+| 🏠 **Home Assistant + MQTT** | Smart-home hub plus a system-monitoring agent that surfaces your server in HA. |
+
+**Everything is hardware-generic.** Nivuus auto-detects your CPU topology (computes `isolcpus`, no hardcoded core numbers), your discrete GPU (fills in `vfio-pci.ids` for you), your disks and NICs — so it works on *your* box, not just the author's.
+
+---
+
+## 📦 Download
+
+Grab the prebuilt image from **[Releases](https://github.com/maximeallanic/nivuus-installer/releases/latest)** → `nivuus-installer-amd64.iso` (~720 MB, UEFI, hybrid). Verify with the published `.sha256`, flash, and go.
+
+Every push to `main` also builds a fresh ISO in CI — download it from the [Actions](https://github.com/maximeallanic/nivuus-installer/actions) tab.
+
+---
+
+## 🔧 Build it yourself
+
+Prefer to roll your own? It's one command on any Debian/Ubuntu box (or just let CI do it):
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mallanic/Nivuus/main/install.sh | sudo bash
+git clone https://github.com/maximeallanic/nivuus-installer.git
+cd nivuus-installer/installer
+sudo apt-get install -y live-build
+sudo make build-iso          # → installer/iso-build/*.iso
 ```
 
-### Installation Manuelle
+Hack on the installer without rebuilding the ISO every time:
+
 ```bash
-git clone https://github.com/mallanic/Nivuus.git
-cd Nivuus
-sudo ./scripts/install.sh
+make test-portal             # run the web wizard locally on :8080
+make test-vm                 # boot the built ISO in QEMU (UEFI)
+# drive the install engine against a throwaway loopback disk:
+sudo python3 install-engine/run.py --config cfg.json --target /mnt/t --stop-after partition
 ```
 
-## Structure du Projet
+---
+
+## 🩻 Under the hood
+
+The live system runs entirely in RAM — your target disk is only touched when *you* hit Install.
 
 ```
-Nivuus/
-├── README.md                    # Ce fichier
-├── install.sh                   # Script d'installation principal
-├── docs/                        # Documentation détaillée
-│   ├── thermal-optimization.md  # Optimisation thermique CPU/GPU
-│   ├── vm-configuration.md      # Configuration QEMU/KVM
-│   ├── winrm-setup.md           # Configuration WinRM
-│   ├── homeassistant-cli.md     # Home Assistant CLI
-│   ├── test-results.md          # Résultats tests réels
-│   └── system-audit.md          # 🆕 Audit complet du système
-├── scripts/                     # Scripts d'installation
-│   ├── optimize-cpu-thermal.sh  # Configuration thermique CPU
-│   ├── install-winrm-cli.sh     # Installation WinRM CLI
-│   ├── winvm                    # Wrapper WinRM
-│   ├── ha                       # Home Assistant CLI
-│   └── validate-install.sh      # Validation installation
-├── configs/                     # Fichiers de configuration
-│   ├── grub-example.conf        # Configuration GRUB (isolcpus)
-│   ├── vm-template.xml          # Template libvirt
-│   ├── setup-winrm.ps1          # Setup WinRM Windows
-│   ├── systemd/                 # Services systemd
-│   │   └── cpu-thermal-optimization.service
-│   ├── network/                 # 🆕 Configuration réseau
-│   │   ├── networkmanager-config.md    # NetworkManager
-│   │   └── hostapd-config.md           # WiFi Access Points
-│   ├── firewall/                # 🆕 Configuration firewall
-│   │   ├── nftables-config.md          # nftables
-│   │   └── firewalld-config.md         # firewalld
-│   └── homeassistant/           # 🆕 Configuration Home Assistant
-│       └── homeassistant-config.md
-└── tests/                       # Tests de validation
-    ├── stress-test.sh           # Test de charge combiné
-    └── thermal-validation.sh    # Validation thermique
+ USB boot (live, in RAM)
+   ├─ nivuus-ap.service     → opens the Wi‑Fi hotspot (hostapd + dnsmasq + captive DNS)
+   │                          falls back to Ethernet if there's no AP-capable Wi‑Fi
+   └─ nivuus-portal.service → FastAPI web wizard (hardware detection, live progress over WebSocket)
+            │
+            └─ install-engine → partition → debootstrap Debian 12 → kernel + GRUB (UEFI)
+                                → apply your chosen features → done, reboot.
 ```
 
-## Configuration Actuelle
+- **Web portal:** Python + FastAPI, zero-build vanilla front-end.
+- **Install engine:** a clean, scripted `debootstrap` (no fragile preseed), streaming structured progress to your browser.
+- **Reuse over reinvention:** the engine drops the whole project into `/opt/nivuus` on the new system and runs the same battle-tested scripts you'd run by hand.
 
-### CPU Configuration
-| Composant | Configuration | Température Max | Notes |
-|-----------|---------------|-----------------|-------|
-| P-cores (0-15) | 3600 MHz max, performance governor | 78°C | Isolated via isolcpus |
-| E-cores (16-23) | 2000 MHz max, powersave governor | 47°C | Host OS uniquement |
-| Emulator Threads | CPUs 14-15 | - | Isolated P-cores |
+Full architecture lives in [`installer/README.md`](installer/README.md).
 
-### VM Configuration
-- **vCPUs**: 14 (tous P-cores)
-- **Pinning**: vCPU 0-13 → Physical CPUs 0-13
-- **Emulator/IOthreads**: Physical CPUs 14-15
-- **RAM**: 32GB dédiés
-- **GPU**: RTX 4070 passthrough (VFIO)
+---
 
-### Résultats Thermiques
+## 🗺️ Repo layout
+
 ```
-Test de charge combiné (E-cores + P-cores @ 100%):
-├─ CPU Package Maximum: 78°C ✅ (2°C sous objectif 80°C)
-├─ E-cores: Stress-ng matrixprod (8 cores)
-├─ P-cores: 14x jobs math intensifs (VM)
-└─ Durée: 120 secondes
-```
-
-### Consommation Électrique
-| État | Avant | Après | Gain |
-|------|-------|-------|------|
-| Idle | ~75W | ~28W | **-47W (-63%)** |
-| Gaming | ~320W | ~280W | **-40W (-12%)** |
-
-## Modules
-
-### 1. Optimisation Thermique
-- Limitation fréquence P-cores: 3600 MHz (80°C max)
-- Limitation fréquence E-cores: 2000 MHz + powersave
-- Service systemd pour persistance
-- Documentation: [docs/thermal-optimization.md](docs/thermal-optimization.md)
-
-### 2. GPU Optimization
-- NVIDIA Dynamic P-State activation
-- P8 (3.9W) au repos → P0 (200W+) en gaming
-- Réduction -35W consommation idle
-- Documentation: [docs/thermal-optimization.md](docs/thermal-optimization.md)
-
-### 3. VM Configuration
-- CPU isolation via kernel parameter (isolcpus=0-15)
-- CPU pinning 1:1 pour latence minimale
-- 14 vCPUs + 2 emulator cores
-- Documentation: [docs/vm-configuration.md](docs/vm-configuration.md)
-
-### 4. Performance Tuning
-- Virtio-net multiqueue (8 queues)
-- CPU topology optimisée
-- Hugepages allocation
-- Documentation: [docs/performance-tuning.md](docs/performance-tuning.md)
-
-### 5. WinRM Remote Management
-- Communication Linux ↔ Windows VM
-- Monitoring GPU/CPU à distance
-- Automatisation tests et scripts
-- Documentation: [docs/winrm-setup.md](docs/winrm-setup.md)
-
-## Audit Système et Configuration
-
-### 📊 Documentation Complète de l'Infrastructure
-
-**Audit système complet:** [docs/system-audit.md](docs/system-audit.md)
-- Vue d'ensemble complète du système
-- Configuration réseau (3 bridges, PPPoE, VLANs)
-- Docker (22+ conteneurs, réseaux personnalisés)
-- VM Windows avec GPU passthrough
-- Services système et sécurité
-- Stockage et performance
-
-### 🌐 Configuration Réseau
-
-**NetworkManager:** [configs/network/networkmanager-config.md](configs/network/networkmanager-config.md)
-- Bridges réseau (localBridge, publicBridge, internalBridge)
-- Connexion PPPoE (ppp0)
-- Configuration VLAN
-- Segmentation réseau
-
-**WiFi Access Points:** [configs/network/hostapd-config.md](configs/network/hostapd-config.md)
-- Configuration dual-band (2.4GHz + 5GHz)
-- 2 SSIDs (privé + public)
-- 802.11ac/n, WPA2-PSK
-- QoS et optimisations
-
-### 🛡️ Firewall et Sécurité
-
-**Firewalld:** [configs/firewall/firewalld-config.md](configs/firewall/firewalld-config.md)
-- Zones réseau (docker, internal, external, home)
-- Port forwarding vers VM Windows (RDP, Moonlight/Parsec)
-- Services exposés et règles
-- Fail2ban intégration
-
-**nftables:** [configs/firewall/nftables-config.md](configs/firewall/nftables-config.md)
-- Configuration nftables backend
-- Tables NAT, mangle, filter
-- MSS clamping pour PPPoE
-- Fail2ban (f2b-table)
-
-### 🏠 Home Assistant
-
-**Configuration:** [configs/homeassistant/homeassistant-config.md](configs/homeassistant/homeassistant-config.md)
-- Network mode: host
-- Emulated Hue (port 80)
-- Docker monitoring (22+ conteneurs)
-- MQTT intégration
-- Google Assistant
-
-### 🐳 Stack Docker
-
-**Services actifs:**
-- **Média:** Plex, Sonarr, Radarr, Prowlarr, Bazarr, Overseerr, Tdarr
-- **Domotique:** Home Assistant, Mosquitto MQTT, DIYHue
-- **Utilitaires:** Gluetun VPN, LanguageTool, Guacamole, RDT Client
-- **Monitoring:** Docker Monitor, Crowdsec
-
-**Réseaux Docker:**
-- mediamanager_default (172.19.0.0/16)
-- homeassistant_default (172.26.0.0/16)
-- allanicme_portfolio-network (172.20.0.0/16)
-- Autres réseaux isolés
-
-## Tests de Validation
-
-### Test de Charge Thermique
-```bash
-sudo /home/mallanic/Projects/Nivuus/tests/stress-test.sh
+nivuus-installer/
+├── installer/        ⭐ the bootable installer (web wizard + WiFi hotspot + engine)
+│   ├── webapp/         FastAPI setup portal + wizard UI
+│   ├── install-engine/ scripted debootstrap install pipeline
+│   ├── ap/             Wi‑Fi hotspot bring-up
+│   ├── iso-build/      live-build config (the ISO recipe)
+│   └── common/         generic hardware detection + progress protocol
+├── mqtt/             Home Assistant system-monitoring agent (TypeScript)
+├── configs/          reference network / firewall / VM configs
+├── scripts/          thermal tuning, validation, HA CLI helpers
+├── docs/             deep-dive documentation
+└── install.sh        the post-install tuner (run standalone too)
 ```
 
-### Validation Installation
-```bash
-sudo /home/mallanic/Projects/Nivuus/scripts/validate-install.sh
-```
+---
 
-## Maintenance
+## 🛠️ Hardware & requirements
 
-### Vérifier l'optimisation thermique
-```bash
-systemctl status cpu-thermal-optimization.service
-```
+- **Target:** any x86‑64 machine that boots **UEFI**. A discrete GPU is needed only for the gaming-VM feature; everything else works without one.
+- **Generic by design:** Intel hybrid (P/E) CPUs get optimal core isolation automatically, but plain CPUs work too.
+- **Built on:** Debian 12 (Bookworm).
+- **For the setup hotspot:** an AP-capable Wi‑Fi adapter is nice-to-have — without one, the wizard is served over Ethernet instead.
 
-### Monitorer les températures
-```bash
-watch -n 1 sensors coretemp-isa-0000
-```
+---
 
-### Vérifier configuration VM
-```bash
-virsh dumpxml Windows | grep -A 20 cputune
-```
+## 🤝 Contributing / hacking
 
-## Performance
+PRs and tinkering very welcome — this is built for people who like to take things apart. Add a feature module, teach the wizard a new question, improve hardware detection. Start with [`installer/README.md`](installer/README.md) and the `make test-*` targets above.
 
-### Impact Gaming (FPS)
-- **Cyberpunk 2077**: -8% FPS (acceptable)
-- **CS2**: -3% FPS (négligeable)
-- **Red Dead Redemption 2**: -12% FPS (acceptable)
-- **Avantage**: Système silencieux, pas de throttling
+> 🔐 **Heads-up:** this is a public, sanitized release. Anywhere you see `CHANGE_ME_*` or `<YOUR_*>` placeholders (Wi‑Fi passwords, PPPoE credentials, tokens), drop in your real values **locally** — never commit them.
 
-### Trade-offs
-| Métrique | Stock | Nivuus | Changement |
-|----------|-------|--------|------------|
-| Fréquence CPU | 5200 MHz | 3600 MHz | -31% |
-| Température | 100°C | 80°C | **-20°C** |
-| Bruit | 60+ dB | <40 dB | **Silencieux** |
-| Consommation idle | 75W | 28W | **-63%** |
-| Performance CPU | 100% | ~70% | -30% |
+---
 
-## Support
+## 📜 License
 
-### Prérequis
-- Debian 12 (Bookworm) ou Ubuntu 22.04+
-- Intel CPU 12th gen+ (P-cores + E-cores)
-- NVIDIA GPU avec drivers 550+
-- QEMU/KVM + libvirt installés
+[MIT](LICENSE) — do whatever you want with it. Build something cool.
 
-### Dépannage
+<div align="center">
 
-**Problème: Températures toujours élevées**
-```bash
-# Vérifier que le service est actif
-systemctl status cpu-thermal-optimization.service
+**Got an old box and a spare GPU? Go flash a stick.** 🕹️
 
-# Vérifier les fréquences actuelles
-grep MHz /proc/cpuinfo | head -16
-```
-
-**Problème: VM lente**
-```bash
-# Vérifier le CPU pinning
-virsh vcpupin Windows
-```
-
-**Problème: Fans à fond pendant download VM**
-```bash
-# Vérifier isolation CPUs
-cat /proc/cmdline | grep isolcpus
-```
-
-## Auteur
-
-**mallanic** - Configuration Nivuus Cloud Gaming Server
-
-## Licence
-
-MIT License - Libre d'utilisation et modification
-
-## Changelog
-
-### v2.1 - 2025-10-18
-- 🆕 Audit système complet (réseau, Docker, firewall)
-- 🆕 Documentation NetworkManager et hostapd
-- 🆕 Documentation firewalld et nftables
-- 🆕 Documentation Home Assistant
-- 📊 Cartographie complète de l'infrastructure
-
-### v2.0 - 2025-10-18
-- Optimisation thermique complète (80°C max)
-- Reconfiguration CPU pinning (14 vCPU + 2 emulator)
-- Optimisation GPU Dynamic P-State
-- Optimisation E-cores (powersave + 2GHz)
-- Tests de validation thermique
-
-### v1.0 - 2024-XX-XX
-- Configuration initiale QEMU/KVM
-- GPU passthrough RTX 4070
-- Configuration basique CPU pinning
+</div>
