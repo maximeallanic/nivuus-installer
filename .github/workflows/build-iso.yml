@@ -28,19 +28,22 @@ jobs:
                       /opt/hostedtoolcache /usr/local/share/boost
           df -h /
 
-      - name: Install live-build and tooling
+      - name: Build ISO (Debian bookworm container)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            live-build debootstrap xorriso mtools dosfstools squashfs-tools \
-            grub-efi-amd64-bin grub-pc-bin
-
-      - name: Allow root git to read the checkout
-        run: sudo git config --global --add safe.directory "$GITHUB_WORKSPACE"
-
-      - name: Build ISO
-        working-directory: installer/iso-build
-        run: sudo ./build.sh
+          # Build inside Debian bookworm so live-build matches the version the
+          # config targets (Ubuntu's older live-build rejects --bootloaders).
+          # --privileged is required for debootstrap/mount/chroot/loop.
+          docker run --privileged --rm -v "${{ github.workspace }}":/build \
+            debian:bookworm bash -euc '
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update
+              apt-get install -y --no-install-recommends \
+                live-build debootstrap xorriso mtools dosfstools squashfs-tools \
+                grub-efi-amd64-bin grub-pc-bin git rsync ca-certificates
+              git config --global --add safe.directory "*"
+              cd /build/installer/iso-build
+              ./build.sh
+            '
 
       - name: Stage ISO artifact
         run: |
