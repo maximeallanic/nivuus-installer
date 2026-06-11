@@ -1,0 +1,20 @@
+# hostapd — Nivuus installer setup hotspot (generated from template).
+# Deliberately minimal and robust: 2.4 GHz, fixed channel, WPA2-PSK. This is the
+# temporary AP shown during install, NOT the production dual-band config.
+interface=@IFACE@
+driver=nl80211
+
+ssid=@SSID@
+hw_mode=g
+channel=6
+country_code=FR
+ieee80211n=1
+wmm_enabled=1
+
+auth_algs=1
+wpa=2
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP
+wpa_passphrase=@PASSPHRASE@
+
+# No bridge: the AP interface holds 10.42.0.1 directly (dnsmasq serves DHCP).

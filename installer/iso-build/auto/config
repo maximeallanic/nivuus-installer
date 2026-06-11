@@ -1,0 +1,20 @@
+#!/bin/sh
+# live-build configuration for the Nivuus installer ISO.
+# Produces a hybrid UEFI/BIOS bootable live image (Debian bookworm, amd64) that
+# boots into the setup hotspot + web portal.
+set -e
+
+lb config noauto \
+    --distribution bookworm \
+    --architectures amd64 \
+    --binary-images iso-hybrid \
+    --bootloaders grub-efi \
+    --debian-installer none \
+    --archive-areas "main contrib non-free non-free-firmware" \
+    --apt-indices false \
+    --apt-recommends false \
+    --memtest none \
+    --iso-application "Nivuus Installer" \
+    --iso-volume "NIVUUS_INSTALL" \
+    --bootappend-live "boot=live components noeject console=tty0 console=ttyS0,115200" \
+    "${@}"

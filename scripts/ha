@@ -1,0 +1,288 @@
+#!/bin/bash
+# HA - Execute Home Assistant API calls
+# Usage: ha <command> [args...]
+
+set -euo pipefail
+
+# Configuration file
+CONFIG_FILE="${HOME}/.config/nivuus/ha.conf"
+
+# Default configuration (localhost with embedded token)
+HA_URL="${HA_URL:-http://localhost:8123}"
+HA_TOKEN="${HA_TOKEN:-<HA_LONG_LIVED_TOKEN>}"
+
+# Load configuration if exists
+if [[ -f "$CONFIG_FILE" ]]; then
+    # shellcheck source=/dev/null
+    source "$CONFIG_FILE"
+fi
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Check if token is configured
+if [[ -z "$HA_TOKEN" ]]; then
+    echo -e "${RED}Error: Home Assistant token not configured${NC}" >&2
+    echo -e "${YELLOW}Create config file:${NC} $CONFIG_FILE" >&2
+    echo ""
+    echo "Example configuration:"
+    echo "  HA_URL=\"http://192.168.1.100:8123\""
+    echo "  HA_TOKEN=\"your-long-lived-token-here\""
+    echo ""
+    echo "Or set environment variables:"
+    echo "  export HA_TOKEN=\"your-token-here\""
+    echo ""
+    echo -e "${BLUE}To create a long-lived token:${NC}"
+    echo "  1. Open Home Assistant web interface"
+    echo "  2. Click on your profile (bottom left)"
+    echo "  3. Scroll to 'Long-Lived Access Tokens'"
+    echo "  4. Click 'Create Token'"
+    echo "  5. Copy the token and add it to the config file"
+    exit 1
+fi
+
+# Helper function to make API calls
+api_call() {
+    local method="$1"
+    local endpoint="$2"
+    local data="${3:-}"
+
+    local url="${HA_URL}${endpoint}"
+    local args=(
+        -s
+        -X "$method"
+        -H "Authorization: Bearer ${HA_TOKEN}"
+        -H "Content-Type: application/json"
+    )
+
+    if [[ -n "$data" ]]; then
+        args+=(-d "$data")
+    fi
+
+    # Make the call and capture response
+    local response
+    response=$(curl "${args[@]}" "$url" 2>&1)
+    local exit_code=$?
+
+    if [[ $exit_code -ne 0 ]]; then
+        echo -e "${RED}Error: Failed to connect to Home Assistant${NC}" >&2
+        echo "URL: $url" >&2
+        echo "Response: $response" >&2
+        return 1
+    fi
+
+    # Try to format JSON if jq is available
+    if command -v jq &> /dev/null; then
+        echo "$response" | jq .
+    else
+        echo "$response"
+    fi
+}
+
+# Command: states
+cmd_states() {
+    if [[ $# -eq 0 ]]; then
+        # List all states
+        api_call GET /api/states
+    else
+        # Get specific entity state
+        local entity_id="$1"
+        api_call GET "/api/states/${entity_id}"
+    fi
+}
+
+# Command: service
+cmd_service() {
+    if [[ $# -lt 2 ]]; then
+        echo -e "${RED}Error: Invalid service command${NC}" >&2
+        echo "Usage: ha service <domain> <service> [data]" >&2
+        echo "" >&2
+        echo "Examples:" >&2
+        echo "  ha service light turn_on '{\"entity_id\": \"light.living_room\"}'" >&2
+        echo "  ha service switch toggle '{\"entity_id\": \"switch.bedroom\"}'" >&2
+        echo "  ha service automation trigger '{\"entity_id\": \"automation.morning_routine\"}'" >&2
+        return 1
+    fi
+
+    local domain="$1"
+    local service="$2"
+    local data="${3:-{}}"
+
+    api_call POST "/api/services/${domain}/${service}" "$data"
+}
+
+# Command: config
+cmd_config() {
+    api_call GET /api/config
+}
+
+# Command: events
+cmd_events() {
+    if [[ $# -lt 1 ]]; then
+        echo -e "${RED}Error: Event type required${NC}" >&2
+        echo "Usage: ha events <event_type> [data]" >&2
+        echo "" >&2
+        echo "Examples:" >&2
+        echo "  ha events test_event" >&2
+        echo "  ha events custom_event '{\"message\": \"Hello\"}'" >&2
+        return 1
+    fi
+
+    local event_type="$1"
+    local data="${2:-{}}"
+
+    api_call POST "/api/events/${event_type}" "$data"
+}
+
+# Command: raw
+cmd_raw() {
+    if [[ $# -lt 1 ]]; then
+        echo -e "${RED}Error: Endpoint required${NC}" >&2
+        echo "Usage: ha raw <endpoint> [method] [data]" >&2
+        echo "" >&2
+        echo "Examples:" >&2
+        echo "  ha raw /api/config" >&2
+        echo "  ha raw /api/states/light.living_room GET" >&2
+        echo "  ha raw /api/services/light/turn_on POST '{\"entity_id\": \"light.kitchen\"}'" >&2
+        return 1
+    fi
+
+    local endpoint="$1"
+    local method="${2:-GET}"
+    local data="${3:-}"
+
+    api_call "$method" "$endpoint" "$data"
+}
+
+# Command: template
+cmd_template() {
+    if [[ $# -lt 1 ]]; then
+        echo -e "${RED}Error: Template required${NC}" >&2
+        echo "Usage: ha template <template_string>" >&2
+        echo "" >&2
+        echo "Examples:" >&2
+        echo "  ha template '{{ states(\"sensor.temperature\") }}'" >&2
+        echo "  ha template '{{ state_attr(\"light.living_room\", \"brightness\") }}'" >&2
+        return 1
+    fi
+
+    local template="$1"
+    local data
+
+    # Use jq to properly escape the JSON if available, otherwise manual escape
+    if command -v jq &> /dev/null; then
+        data=$(jq -n --arg tpl "$template" '{template: $tpl}')
+    else
+        # Manual escape: escape backslashes first, then quotes
+        local escaped_template="${template//\\/\\\\}"
+        escaped_template="${escaped_template//\"/\\\"}"
+        data="{\"template\": \"${escaped_template}\"}"
+    fi
+
+    api_call POST /api/template "$data"
+}
+
+# Main help
+show_help() {
+    echo -e "${GREEN}Home Assistant CLI${NC}"
+    echo ""
+    echo -e "${YELLOW}Usage:${NC} ha <command> [args...]"
+    echo ""
+    echo -e "${YELLOW}Commands:${NC}"
+    echo "  states [entity_id]              List all states or get specific entity state"
+    echo "  service <domain> <service> [data]  Call a Home Assistant service"
+    echo "  config                          Get Home Assistant configuration"
+    echo "  events <type> [data]            Fire an event"
+    echo "  template <template>             Render a template"
+    echo "  raw <endpoint> [method] [data]  Make a raw API call"
+    echo ""
+    echo -e "${YELLOW}Examples:${NC}"
+    echo "  ha states"
+    echo "  ha states light.living_room"
+    echo "  ha service light turn_on '{\"entity_id\": \"light.living_room\"}'"
+    echo "  ha service light turn_on '{\"entity_id\": \"light.kitchen\", \"brightness\": 255}'"
+    echo "  ha service switch toggle '{\"entity_id\": \"switch.bedroom\"}'"
+    echo "  ha config"
+    echo "  ha events test_event '{\"message\": \"Hello\"}'"
+    echo "  ha template '{{ states(\"sensor.temperature\") }}'"
+    echo "  ha raw /api/discovery_info"
+    echo ""
+    echo -e "${YELLOW}Configuration:${NC}"
+    echo "  Config file: $CONFIG_FILE"
+    echo "  HA URL: $HA_URL"
+    echo "  Token: $(if [[ -n "$HA_TOKEN" ]]; then echo "configured ✓"; else echo "not set ✗"; fi)"
+    echo ""
+    echo -e "${YELLOW}Common service examples:${NC}"
+    echo "  # Lights"
+    echo "  ha service light turn_on '{\"entity_id\": \"light.all\"}'"
+    echo "  ha service light turn_off '{\"entity_id\": \"light.bedroom\"}'"
+    echo "  ha service light turn_on '{\"entity_id\": \"light.desk\", \"brightness_pct\": 50}'"
+    echo "  ha service light turn_on '{\"entity_id\": \"light.rgb\", \"rgb_color\": [255, 0, 0]}'"
+    echo ""
+    echo "  # Switches"
+    echo "  ha service switch turn_on '{\"entity_id\": \"switch.coffee_maker\"}'"
+    echo "  ha service switch toggle '{\"entity_id\": \"switch.fan\"}'"
+    echo ""
+    echo "  # Media Players"
+    echo "  ha service media_player media_play '{\"entity_id\": \"media_player.living_room\"}'"
+    echo "  ha service media_player media_pause '{\"entity_id\": \"media_player.bedroom\"}'"
+    echo "  ha service media_player volume_set '{\"entity_id\": \"media_player.kitchen\", \"volume_level\": 0.5}'"
+    echo ""
+    echo "  # Climate"
+    echo "  ha service climate set_temperature '{\"entity_id\": \"climate.bedroom\", \"temperature\": 22}'"
+    echo "  ha service climate set_hvac_mode '{\"entity_id\": \"climate.living_room\", \"hvac_mode\": \"heat\"}'"
+    echo ""
+    echo "  # Automations"
+    echo "  ha service automation trigger '{\"entity_id\": \"automation.morning_routine\"}'"
+    echo "  ha service automation turn_off '{\"entity_id\": \"automation.night_mode\"}'"
+    echo ""
+    echo "  # Scripts"
+    echo "  ha service script turn_on '{\"entity_id\": \"script.movie_time\"}'"
+    echo ""
+    echo "  # Notifications"
+    echo "  ha service notify.mobile_app '{\"message\": \"Hello from CLI!\"}'"
+    echo "  ha service notify.persistent_notification '{\"message\": \"Task completed\", \"title\": \"Info\"}'"
+}
+
+# Main command dispatcher
+if [[ $# -eq 0 ]]; then
+    show_help
+    exit 0
+fi
+
+COMMAND="$1"
+shift
+
+case "$COMMAND" in
+    states)
+        cmd_states "$@"
+        ;;
+    service)
+        cmd_service "$@"
+        ;;
+    config)
+        cmd_config "$@"
+        ;;
+    events)
+        cmd_events "$@"
+        ;;
+    template)
+        cmd_template "$@"
+        ;;
+    raw)
+        cmd_raw "$@"
+        ;;
+    help|--help|-h)
+        show_help
+        ;;
+    *)
+        echo -e "${RED}Error: Unknown command '${COMMAND}'${NC}" >&2
+        echo ""
+        show_help
+        exit 1
+        ;;
+esac

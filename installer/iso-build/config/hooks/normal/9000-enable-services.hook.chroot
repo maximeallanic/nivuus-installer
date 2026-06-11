@@ -1,0 +1,15 @@
+#!/bin/sh
+# Enable the Nivuus installer services and unmask hostapd in the live image.
+set -e
+
+# hostapd ships masked on Debian; the installer manages it directly.
+systemctl unmask hostapd 2>/dev/null || true
+# We start hostapd ourselves via bring-up-ap.sh, so keep the unit disabled.
+systemctl disable hostapd 2>/dev/null || true
+
+systemctl enable nivuus-ap.service
+systemctl enable nivuus-portal.service
+
+# Make the bring-up script executable (permissions can be lost through includes).
+chmod +x /opt/nivuus-installer/ap/bring-up-ap.sh 2>/dev/null || true
+chmod +x /opt/nivuus-installer/install-engine/run.py 2>/dev/null || true

@@ -1,0 +1,39 @@
+# Packages baked into the live installer environment.
+
+# Hotspot + captive portal
+hostapd
+dnsmasq
+iw
+wireless-regdb
+wpasupplicant
+qrencode
+nftables
+iproute2
+
+# Web portal runtime (venv built by hook adds fastapi/uvicorn/pydantic/jinja2)
+python3
+python3-venv
+python3-pip
+ca-certificates
+
+# Install engine: partitioning, debootstrap, filesystems, payload copy
+debootstrap
+parted
+gdisk
+dosfstools
+e2fsprogs
+lvm2
+rsync
+udev
+
+# Firmware so WiFi/NICs work in the live env on real hardware
+firmware-linux
+firmware-iwlwifi
+firmware-realtek
+firmware-atheros
+
+# Convenience for on-console diagnostics
+pciutils
+usbutils
+less
+nano

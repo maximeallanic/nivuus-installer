@@ -1,0 +1,11 @@
+[Unit]
+Description=CPU Thermal Optimization (P-cores 3600MHz + E-cores 2000MHz powersave)
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/optimize-cpu-thermal.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

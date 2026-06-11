@@ -1,0 +1,19 @@
+[Unit]
+Description=Nivuus installer — web configuration portal
+Documentation=https://github.com/mallanic/Nivuus
+After=nivuus-ap.service network.target
+Wants=nivuus-ap.service
+ConditionPathExists=/opt/nivuus-installer/webapp/main.py
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/nivuus-installer/webapp
+# Use the bundled venv (pydantic v2 / fastapi) created by the live-build hook.
+ExecStart=/opt/nivuus-installer/venv/bin/python3 /opt/nivuus-installer/webapp/main.py
+Environment=NIVUUS_PORTAL_HOST=0.0.0.0
+Environment=NIVUUS_PORTAL_PORT=80
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

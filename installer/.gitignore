@@ -1,0 +1,23 @@
+# live-build working tree and outputs
+iso-build/.build/
+iso-build/cache/
+iso-build/chroot/
+iso-build/binary/
+iso-build/*.iso
+iso-build/*.log
+iso-build/*.files
+iso-build/*.packages
+iso-build/config/binary
+iso-build/config/bootstrap
+iso-build/config/chroot
+iso-build/config/common
+iso-build/config/source
+
+# Payload synced in by build.sh (regenerated each build)
+iso-build/config/includes.chroot/opt/nivuus-installer/
+iso-build/config/includes.chroot/opt/nivuus-src/
+
+# Python
+__pycache__/
+*.pyc
+venv/

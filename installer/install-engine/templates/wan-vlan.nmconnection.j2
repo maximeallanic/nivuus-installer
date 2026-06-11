@@ -1,0 +1,16 @@
+[connection]
+id=wan-vlan-{{ parent }}.{{ vlan_id }}
+uuid={{ uuid }}
+type=vlan
+interface-name={{ parent }}.{{ vlan_id }}
+autoconnect=true
+
+[vlan]
+parent={{ parent }}
+id={{ vlan_id }}
+
+[ipv4]
+method=disabled
+
+[ipv6]
+method=ignore

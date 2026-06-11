@@ -1,0 +1,15 @@
+[Unit]
+Description=Nivuus installer — setup hotspot (WiFi AP / Ethernet fallback)
+Documentation=https://github.com/mallanic/Nivuus
+After=systemd-udev-settle.service
+Wants=systemd-udev-settle.service
+Before=nivuus-portal.service
+ConditionPathExists=/opt/nivuus-installer/ap/bring-up-ap.sh
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/nivuus-installer/ap/bring-up-ap.sh
+
+[Install]
+WantedBy=multi-user.target

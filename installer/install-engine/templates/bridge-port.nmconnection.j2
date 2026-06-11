@@ -1,0 +1,12 @@
+[connection]
+id=bridge-port-{{ iface }}
+uuid={{ uuid }}
+type=ethernet
+interface-name={{ iface }}
+master={{ bridge }}
+slave-type=bridge
+autoconnect=true
+
+[ethernet]
+
+[bridge-port]

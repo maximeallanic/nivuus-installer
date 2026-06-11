@@ -1,0 +1,45 @@
+# ── Build artifacts ────────────────────────────────────────────────────────
+# live-build working tree and outputs (huge; also embed a copy of the repo)
+installer/iso-build/.build/
+installer/iso-build/cache/
+installer/iso-build/chroot/
+installer/iso-build/binary/
+installer/iso-build/*.iso
+installer/iso-build/*.zsync
+installer/iso-build/*.log
+installer/iso-build/*.files
+installer/iso-build/*.packages
+installer/iso-build/*.packages.*
+installer/iso-build/chroot.*
+installer/iso-build/*.contents
+installer/iso-build/*.modified_timestamps
+installer/iso-build/config/binary
+installer/iso-build/config/bootstrap
+installer/iso-build/config/chroot
+installer/iso-build/config/common
+installer/iso-build/config/source
+installer/iso-build/local/
+
+# Payload synced in by build.sh (regenerated each build; mirrors the repo)
+installer/iso-build/config/includes.chroot/opt/nivuus-installer/
+installer/iso-build/config/includes.chroot/opt/nivuus-src/
+
+# ── Node / TypeScript ──────────────────────────────────────────────────────
+node_modules/
+dist/
+*.deb
+
+# ── Python ─────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# ── Logs & runtime ─────────────────────────────────────────────────────────
+*.log
+snapshot.json
+
+# ── Local / secret config (never commit) ───────────────────────────────────
+*.nmconnection
+ha.conf
+.claude/settings.local.json

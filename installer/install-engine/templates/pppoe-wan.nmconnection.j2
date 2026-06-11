@@ -1,0 +1,27 @@
+[connection]
+id=pppoe-{{ parent }}.{{ vlan_id }}
+uuid={{ uuid }}
+type=pppoe
+# CRITICAL (see CLAUDE.md): PPPoE-over-VLAN under NetworkManager needs BOTH a
+# concrete ppp interface-name AND pppoe.parent set to the VLAN device. An empty
+# interface-name yields "error determine name for pppoe".
+interface-name=ppp0
+autoconnect=true
+zone=external
+
+[pppoe]
+parent={{ parent }}.{{ vlan_id }}
+username={{ username }}
+password={{ password }}
+
+[ppp]
+mru=1492
+mtu=1492
+lcp-echo-failure=5
+lcp-echo-interval=30
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=ignore

@@ -1,0 +1,7 @@
+# Nivuus installer portal — runtime dependencies.
+# On the live ISO these come from Debian packages (python3-fastapi, etc.);
+# this file documents versions for standalone/dev runs (pip install -r).
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.5
+jinja2>=3.1

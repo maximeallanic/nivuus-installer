@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Installation Nivuus</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">NIVUUS</div>
+    <div class="subtitle">Assistant d'installation</div>
+  </header>
+
+  <main id="app">
+    <!-- Step navigation -->
+    <nav class="steps" id="stepnav"></nav>
+
+    <form id="wizard" autocomplete="off">
+      <!-- 1. Disk -->
+      <section class="step" data-step="disk">
+        <h2>1 · Disque cible</h2>
+        <p class="warn">⚠️ Le disque sélectionné sera entièrement effacé.</p>
+        <div id="disks" class="cards">Détection du matériel…</div>
+        <label class="check"><input type="checkbox" id="use_lvm"> Utiliser LVM</label>
+      </section>
+
+      <!-- 2. System -->
+      <section class="step" data-step="system" hidden>
+        <h2>2 · Système</h2>
+        <label>Nom d'hôte <input name="hostname" value="nivuus" required></label>
+        <label>Domaine (optionnel) <input name="domain" placeholder="local"></label>
+        <label>Locale
+          <select name="locale">
+            <option value="en_US.UTF-8">en_US.UTF-8</option>
+            <option value="fr_FR.UTF-8">fr_FR.UTF-8</option>
+          </select>
+        </label>
+        <label>Fuseau horaire <input name="timezone" value="Europe/Paris"></label>
+      </section>
+
+      <!-- 3. Account -->
+      <section class="step" data-step="account" hidden>
+        <h2>3 · Compte administrateur</h2>
+        <label>Nom d'utilisateur <input name="username" required></label>
+        <label>Mot de passe <input name="password" type="password"></label>
+        <label>Clé SSH publique (optionnel)
+          <textarea name="ssh_key" rows="3" placeholder="ssh-ed25519 AAAA…"></textarea>
+        </label>
+        <label>Port SSH <input name="ssh_port" type="number" value="22" min="1" max="65535"></label>
+        <label class="check"><input type="checkbox" name="password_auth" checked> Autoriser l'authentification SSH par mot de passe</label>
+      </section>
+
+      <!-- 4. WAN -->
+      <section class="step" data-step="wan" hidden>
+        <h2>4 · Connexion Internet (WAN)</h2>
+        <label>Mode
+          <select name="wan_mode" id="wan_mode">
+            <option value="dhcp">DHCP (simple)</option>
+            <option value="pppoe">PPPoE (fibre Orange/Sosh)</option>
+          </select>
+        </label>
+        <label>Interface WAN
+          <select name="wan_interface" id="wan_interface"></select>
+        </label>
+        <div id="pppoe_fields" hidden>
+          <label>VLAN ID <input name="wan_vlan" type="number" value="835"></label>
+          <label>Identifiant PPPoE <input name="pppoe_user" placeholder="fti/xxxxx"></label>
+          <label>Mot de passe PPPoE <input name="pppoe_password" type="password"></label>
+        </div>
+      </section>
+
+      <!-- 5. WiFi AP -->
+      <section class="step" data-step="wifi" hidden>
+        <h2>5 · Point d'accès WiFi (production)</h2>
+        <label class="check"><input type="checkbox" id="wifi_enabled" name="wifi_enabled"> Activer le point d'accès WiFi</label>
+        <div id="wifi_fields" hidden>
+          <label>Pays <input name="wifi_country" value="FR" maxlength="2"></label>
+          <label>SSID privé <input name="private_ssid" value="Nivuus"></label>
+          <label>Mot de passe privé <input name="private_passphrase" type="password" placeholder="8–63 caractères"></label>
+          <label>SSID invités (optionnel) <input name="public_ssid"></label>
+          <label>Mot de passe invités <input name="public_passphrase" type="password"></label>
+          <label class="check"><input type="checkbox" name="dual_band" checked> Double bande (2.4 + 5 GHz)</label>
+          <div id="wifi_ifaces" class="hint"></div>
+        </div>
+      </section>
+
+      <!-- 6. Features -->
+      <section class="step" data-step="features" hidden>
+        <h2>6 · Fonctionnalités</h2>
+        <div id="features" class="features"></div>
+      </section>
+
+      <!-- 7. Review -->
+      <section class="step" data-step="review" hidden>
+        <h2>7 · Récapitulatif</h2>
+        <pre id="summary" class="summary"></pre>
+        <p class="warn">Cliquez sur « Installer » pour lancer l'installation. Cette action efface le disque sélectionné.</p>
+      </section>
+    </form>
+
+    <div class="nav-buttons">
+      <button id="prevBtn" type="button">← Précédent</button>
+      <button id="nextBtn" type="button">Suivant →</button>
+      <button id="installBtn" type="button" class="primary" hidden>Installer</button>
+    </div>
+
+    <!-- Progress overlay -->
+    <section id="progress" class="progress" hidden>
+      <h2>Installation en cours…</h2>
+      <div class="bar"><div id="barFill" class="bar-fill"></div></div>
+      <div id="pctLabel" class="pct">0 %</div>
+      <ul id="log" class="log"></ul>
+      <div id="finished" hidden></div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
