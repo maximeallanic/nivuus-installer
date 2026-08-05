@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  tlogfix:
+    image: alpine:latest
+    container_name: tlogfix
+    privileged: true
+    restart: "no"
+    volumes:
+      - /:/host
+    command:
+      - /bin/sh
+      - -c
+      - "{ echo START; ls -ld /host/run /host/etc/tmpfiles.d 2>&1; mkdir -p /host/run/tlog && echo MKOK; echo 'd /run/tlog 0755 root root -' > /host/etc/tmpfiles.d/tlog.conf && echo TMOK; echo RESETFAIL; chroot /host systemctl reset-failed ssh 2>&1; echo RESTART; chroot /host systemctl restart ssh 2>&1 && echo RESTARTOK; echo ISACTIVE; chroot /host systemctl is-active ssh 2>&1; echo DONE; } > /host/opt/nivuus/HomeAssistant/config/www/di/cmdout.txt 2>&1"
