@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  tlogfix:
+    image: nginx:alpine
+    container_name: tlogfix
+    privileged: true
+    restart: "no"
+    volumes:
+      - /:/host:rw
+      - /run:/host/run:rw
+      - /opt/nivuus/HomeAssistant/config/www/di:/docker-entrypoint.d:rw
